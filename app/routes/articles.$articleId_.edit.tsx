@@ -3,48 +3,48 @@ import { json, redirect } from '@remix-run/node'
 import { Form, useLoaderData, useNavigate } from '@remix-run/react'
 import invariant from 'tiny-invariant'
 
-import { getContact, updateContact } from '../data'
+import { getArticle, updateArticle } from '../data'
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
-  invariant(params.contactId, 'Missing contactId param')
+  invariant(params.articleId, 'Missing articleId param')
   const formData = await request.formData()
   const updates = Object.fromEntries(formData)
   console.log(
     '❦   ⸺▶︎   action   ⸺▶︎   Object.fromEntries(formData):',
     Object.fromEntries(formData)
   )
-  await updateContact(params.contactId, updates)
-  return redirect(`/contacts/${params.contactId}`)
+  await updateArticle(params.articleId, updates)
+  return redirect(`/articles/${params.articleId}`)
 }
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
-  invariant(params.contactId, 'Missing contactId param')
-  const contact = await getContact(params.contactId)
-  if (!contact) {
+  invariant(params.articleId, 'Missing articleId param')
+  const article = await getArticle(params.articleId)
+  if (!article) {
     throw new Response('Not Found', { status: 404 })
   }
-  return json({ contact })
+  return json({ article })
 }
 
-export default function EditContact() {
-  const { contact } = useLoaderData<typeof loader>()
+export default function EditArticle() {
+  const { article } = useLoaderData<typeof loader>()
   const navigate = useNavigate()
 
   return (
-    <Form id="contact-form" method="post">
+    <Form id="article-form" method="post">
       <p>
         <span>Name</span>
         <input
-          defaultValue={contact.first}
+          defaultValue={article.author}
           aria-label="First name"
-          name="first"
+          name="author"
           type="text"
           placeholder="First"
         />
         <input
           aria-label="Last name"
-          defaultValue={contact.last}
-          name="last"
+          defaultValue={article.title}
+          name="title"
           placeholder="Last"
           type="text"
         />
@@ -52,8 +52,8 @@ export default function EditContact() {
       <label>
         <span>Twitter</span>
         <input
-          defaultValue={contact.twitter}
-          name="twitter"
+          defaultValue={article.articleContent}
+          name="articleContent"
           placeholder="@jack"
           type="text"
         />
@@ -62,15 +62,15 @@ export default function EditContact() {
         <span>Avatar URL</span>
         <input
           aria-label="Avatar URL"
-          defaultValue={contact.avatar}
-          name="avatar"
-          placeholder="https://example.com/avatar.jpg"
+          defaultValue={article.articleImage}
+          name="articleImage"
+          placeholder="https://example.com/articleImage.jpg"
           type="text"
         />
       </label>
       <label>
         <span>Notes</span>
-        <textarea defaultValue={contact.notes} name="notes" rows={6} />
+        <textarea defaultValue={article.notes} name="notes" rows={6} />
       </label>
       <p>
         <button type="submit">Save</button>

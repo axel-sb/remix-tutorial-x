@@ -39,7 +39,7 @@ if (import.meta) {
     //@ts-expect-error
     "app/routes/articles.$articleId_.edit.tsx"
   );
-  import.meta.hot.lastModified = "1698343890270.168";
+  import.meta.hot.lastModified = "1698343890270.1677";
 }
 function EditArticle() {
   _s();
@@ -150,4 +150,4 @@ window.$RefreshSig$ = prevRefreshSig;
 export {
   EditArticle as default
 };
-//# sourceMappingURL=/build/routes/articles.$articleId_.edit-4EZ7U7ZW.js.map
+//# sourceMappingURL=/build/routes/articles.$articleId_.edit-QZCU2P6H.js.map

@@ -1,3 +1,4 @@
+/* eslint-disable jsx-a11y/alt-text */
 import { json, redirect } from '@remix-run/node'
 
 import {
@@ -9,23 +10,48 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useFetcher,
   useLoaderData,
   useNavigation,
   useSubmit,
 } from '@remix-run/react'
 
-import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node'
+import frame from './images/frame.webp'
+import logo from './images/icons/logo-ff.svg'
+import read from './images/icons/read.svg'
+
+import type {
+  ActionFunctionArgs,
+  LinksFunction,
+  LoaderFunctionArgs,
+} from '@remix-run/node'
 
 import appStylesHref from './app.css'
 
-import { createEmptyContact, getContacts } from './data'
+import {
+  createEmptyArticle,
+  updateArticle,
+  getArticles,
+  getImages,
+} from './data'
+
+import invariant from 'tiny-invariant'
 
 import { useEffect } from 'react'
 
-export const action = async () => {
-  const contact = await createEmptyContact()
-  return redirect(`/contacts/${contact.id}/edit`)
+export const action = async ({ params, request }: ActionFunctionArgs) => {
+  invariant(params.articleId, 'Missing articleId param')
+  const article = await createEmptyArticle()
+  const formData = await request.formData()
+  return updateArticle(params.articleId, {
+    favorite: formData.get('favorite') === 'true',
+  })
 }
+
+/* export const action = async () => {
+  const article = await createEmptyArticle()
+  return redirect(`/articles/${article.id}/edit`)
+} */
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: appStylesHref },
@@ -34,12 +60,13 @@ export const links: LinksFunction = () => [
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url)
   const q = url.searchParams.get('q')
-  const contacts = await getContacts(q)
-  return json({ contacts, q })
+  const articles = await getArticles(q)
+  const images = await getImages()
+  return json({ articles, images, q })
 }
 
 export default function App() {
-  const { contacts, q } = useLoaderData<typeof loader>()
+  const { articles, q } = useLoaderData<typeof loader>()
   const navigation = useNavigation()
   const submit = useSubmit()
   const searching =
@@ -53,6 +80,23 @@ export default function App() {
     }
   }, [q])
 
+  /* useEffect(() => {
+    const scroller = document.querySelector('.scroller')
+    scroller.addEventListener('scroll', handleScroll)
+
+    return () => scroller.removeEventListener('scroll', handleScroll)
+  }, []) */
+
+  const handleScroll = (event) => {
+    const scroller2 = document.querySelector('.scroller-lg')
+    const scrollPos = Math.round((event.currentTarget.scrollLeft / 85) * 390)
+    scroller2.scrollTo({
+      left: scrollPos,
+      behavior: 'smooth',
+    })
+    //const primaryImageId = document.querySelector('.scroller img').id
+  }
+
   return (
     <html lang="de">
       <head>
@@ -63,8 +107,11 @@ export default function App() {
       </head>
 
       <body>
-        <div id="sidebar" className="subject">
-          <h1>Juni 2023</h1>
+        <div id="page-wrapper">
+          <header>
+            <img id="logo" src={logo} alt="logo" />
+            <div>Juni 2023</div>
+          </header>
           <div>
             <Form
               id="search-form"
@@ -78,7 +125,7 @@ export default function App() {
             >
               <input
                 id="q"
-                aria-label="Search contacts"
+                aria-label="Search articles"
                 className={searching ? 'loading' : ''}
                 defaultValue={q || ''}
                 placeholder="Search"
@@ -91,43 +138,86 @@ export default function App() {
               <button type="submit">New</button>
             </Form>
           </div>
-          <nav>
-            {contacts.length ? (
-              <ul className="horizontal-media-scroller">
-                {contacts.map((contact) => (
-                  <li key={contact.page}>
+
+          <nav id="tn">
+            {articles.length ? (
+              <ul className="scroller" onScroll={handleScroll}>
+                {articles.map((article) => (
+                  <li key={article.index}>
                     <NavLink
                       className={({ isActive, isPending }) =>
                         isActive ? 'active' : isPending ? 'pending' : ''
                       }
-                      to={`contacts/${contact.page}`}
+                      to={`articles/${article.page}#detail`}
                     >
-                      {contact.page ? (
+                      {article.page ? (
                         <img
-                          alt={`${contact.first} ${contact.last} avatar`}
-                          key={contact.avatar}
-                          src={contact.avatar}
+                          alt={`${article.author} ${article.title} articleImage`}
+                          key={article.articleImage}
+                          src={article.articleImage}
+                          id={article.index}
                         />
                       ) : (
                         <i>No Name</i>
                       )}{' '}
-                      {contact.favorite ? <span>★</span> : null}
+                      {article.favorite ? <span></span> : null}
                     </NavLink>
                   </li>
                 ))}
               </ul>
             ) : (
               <p>
-                <i>No contacts</i>
+                <i>No articles</i>
+              </p>
+            )}
+          </nav>
+          <div id="read">
+            <a href="link">
+              {' '}
+              Artikeltext <img src={read} />{' '}
+            </a>
+          </div>
+          <nav id="lg">
+            {articles.length ? (
+              <ul className="scroller-lg">
+                {articles.map((article) => (
+                  <li key={article.index}>
+                    <NavLink
+                      className={({ isActive, isPending }) =>
+                        isActive ? 'active' : isPending ? 'pending' : ''
+                      }
+                      to={`articles/${article.page}#detail`}
+                    >
+                      {article.page ? (
+                        <img
+                          alt={`${article.author} ${article.title} articleImage`}
+                          key={article.articleImage}
+                          src={article.articleImage}
+                          id={article.index}
+                          width={390}
+                          height={453}
+                        />
+                      ) : (
+                        <i>No Name</i>
+                      )}{' '}
+                      {article.favorite ? <span></span> : null}
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                <i>No articles</i>
               </p>
             )}
           </nav>
         </div>
+
         <div
           className={
             navigation.state === 'loading' && !searching ? 'loading' : ''
           }
-          id="detail" className="subject2"
+          id="detail"
         >
           <Outlet />
         </div>
@@ -136,5 +226,23 @@ export default function App() {
         <LiveReload />
       </body>
     </html>
+  )
+}
+const Favorite: FunctionComponent<{
+  article: Pick<ArticleRecord, 'favorite'>
+}> = ({ article }) => {
+  const fetcher = useFetcher()
+  const favorite = article.favorite
+
+  return (
+    <fetcher.Form method="post">
+      <button
+        aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
+        name="favorite"
+        value={favorite ? 'false' : 'true'}
+      >
+        {favorite ? '★' : '☆'}
+      </button>
+    </fetcher.Form>
   )
 }
